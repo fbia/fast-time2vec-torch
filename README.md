@@ -29,10 +29,14 @@ embeddings = t2v(timestamps)         # -> [32, 100, 16]
 
 `out_features` is the total embedding size: 1 linear term + `out_features - 1` periodic terms. The input's last dimension must be 1 (a scalar time feature).
 
-> **Tip:** scale/normalize your time input. The linear channel (`ω₀·τ + φ₀`) is
-> unbounded, so very large `τ` can dominate the embedding and destabilize training.
-> Normalized timestamps — together with the small frequency init — train more
-> stably ([discussion](https://github.com/ojus1/Time2Vec-PyTorch)).
+> **Note on input scale.** Time2Vec is *invariant to time rescaling* by design —
+> the learnable frequencies absorb any scale factor (`ωᵢ → ωᵢ/α`), so it can in
+> principle consume raw timestamps at any unit
+> ([paper](https://arxiv.org/abs/1907.05321), §3). In practice, very large raw
+> magnitudes (e.g. Unix-epoch seconds) make optimization harder — with the default
+> `ω₀=1` init the linear channel `ω₀·τ + φ₀` and its gradients start large — so
+> normalizing the input usually speeds convergence. This is an empirical
+> convenience, not a requirement of the formulation.
 
 ## ✨ Features
 

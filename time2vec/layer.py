@@ -20,8 +20,9 @@ class EfficientTime2Vec(nn.Module):
     (``U(0, 2*pi)``), and the linear term is pinned to identity (``omega0 = 1``,
     ``phi0 = 0``). Small initial frequencies are the common Time2Vec practice for
     the learned ``omega``/``phi`` parameters and avoid premature high-frequency
-    oscillation. Scale/normalize the time input: the linear channel is unbounded,
-    so very large inputs can dominate the embedding.
+    oscillation. Time2Vec is invariant to time rescaling (learnable frequencies
+    absorb the scale), but normalizing very large raw inputs typically helps
+    optimization converge.
     """
 
     def __init__(

@@ -12,7 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 keywords = ["time2vec", "pytorch", "torch", "time-series", "embedding", "positional-encoding", "temporal"]
 authors = [
-    { name = "Francesco Brundu", email = "author@gmail.com" }
+    { name = "Francesco Brundu" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

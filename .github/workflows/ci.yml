@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Sync dependencies
+        run: uv sync
+      - name: Type check
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest -q
+      - name: Build
+        run: uv build
+
+  min-deps:
+    # Validates the declared floor (torch>=2.0, pytest>=8) still installs and passes.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+          enable-cache: true
+      - name: Sync lowest direct dependencies
+        run: uv sync --resolution lowest-direct
+      - name: Tests
+        run: uv run pytest -q

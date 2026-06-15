@@ -1,0 +1,54 @@
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12"]
+build-backend = "uv_build"
+
+[project]
+name = "fast-time2vec-torch"
+version = "0.1.0"
+description = "High-performance vectorized Time2Vec layer in PyTorch."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["time2vec", "pytorch", "torch", "time-series", "embedding", "positional-encoding", "temporal"]
+authors = [
+    { name = "Francesco Brundu" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "torch>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/fbia/fast-time2vec-torch"
+Repository = "https://github.com/fbia/fast-time2vec-torch"
+Issues = "https://github.com/fbia/fast-time2vec-torch/issues"
+Changelog = "https://github.com/fbia/fast-time2vec-torch/blob/main/CHANGELOG.md"
+Author = "https://www.linkedin.com/in/fbrundu"
+
+[dependency-groups]
+dev = ["pytest>=8", "mypy>=1.8"]
+
+[tool.uv.build-backend]
+module-root = ""
+module-name = "time2vec"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["time2vec", "tests"]

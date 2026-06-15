@@ -1,2 +1,108 @@
 # fast-time2vec-torch
 A high-performance, fully vectorized PyTorch implementation of the Time2Vec temporal embedding layer.
+
+[![CI](https://github.com/fbia/fast-time2vec-torch/actions/workflows/ci.yml/badge.svg)](https://github.com/fbia/fast-time2vec-torch/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org)
+
+An efficient PyTorch implementation of the **Time2Vec** temporal embedding layer (*[Time2Vec: Learning a Vector Representation of Time](https://arxiv.org/abs/1907.05321)*, Kazemi et al., 2019), built as a single fused projection.
+
+## 📦 Installation
+
+```bash
+pip install git+https://github.com/fbia/fast-time2vec-torch.git
+```
+
+While on `0.x` the API may change between minor versions — pin to a tag or commit for reproducible builds, e.g. `...fast-time2vec-torch.git@<tag-or-sha>`.
+
+## 🚀 Quick Start
+
+```python
+import torch
+from time2vec import Time2Vec
+
+t2v = Time2Vec(out_features=16)
+
+timestamps = torch.rand(32, 100, 1)  # [Batch, Seq, 1]
+embeddings = t2v(timestamps)         # -> [32, 100, 16]
+```
+
+`out_features` is the total embedding size: 1 linear term + `out_features - 1` periodic terms. The input's last dimension must be 1 (a scalar time feature).
+
+> **Note on input scale.** Time2Vec is *invariant to time rescaling* by design —
+> the learnable frequencies absorb any scale factor (`ωᵢ → ωᵢ/α`), so it can in
+> principle consume raw timestamps at any unit
+> ([paper](https://arxiv.org/abs/1907.05321), §3). In practice, very large raw
+> magnitudes (e.g. Unix-epoch seconds) make optimization harder — with the default
+> `ω₀=1` init the linear channel `ω₀·τ + φ₀` and its gradients start large — so
+> normalizing the input usually speeds convergence. This is an empirical
+> convenience, not a requirement of the formulation.
+
+## ✨ Features
+
+* **Mathematical alignment**: one linear term plus sinusoidal terms, matching the paper's scalar-frequency mapping.
+* **Single fused projection**: linear and periodic components share one `nn.Linear`, so the whole layer is a single matrix multiplication — no `repeat_interleave` or redundant tensor copies.
+* **Device & dtype agnostic**: runs on CPU, GPU, and MPS without hardcoded device strings — moves with `.to(device)`, or construct directly via `Time2Vec(k, device=..., dtype=...)`.
+* **Deployment ready**: standard `reset_parameters()`/`extra_repr()`, runs under `autocast`/bf16/fp16, and is both `torch.compile`- and `torch.jit.script`-compatible.
+* **Sensible init**: periodic frequencies init small (`N(0, 0.1)`) with random phases (`U(0, 2π)`); the linear term is pinned to identity (`ω₀=1, φ₀=0`) — the common Time2Vec recipe for learned frequencies, avoiding premature high-frequency oscillation.
+
+## ⚡ Performance
+
+The layer is one `nn.Linear` projection followed by `sin` applied to the
+**contiguous** projection — a `sin` over a *strided* slice is dramatically slower
+on GPU backends. On an Apple M-series GPU (PyTorch MPS), median forward latency
+over 100 runs for a `[256, 512, 1]` batch:
+
+| out_features | this layer | [ojus1/Time2Vec-PyTorch](https://github.com/ojus1/Time2Vec-PyTorch) | strided-`sin` variant |
+|---:|---:|---:|---:|
+| 64  | **2.1 ms** | 4.4 ms | 15.7 ms |
+| 128 | **3.1 ms** | 8.0 ms | 37.9 ms |
+
+CPU latency is comparable across implementations; the win is on GPU. Numbers are
+hardware-dependent — reproduce with:
+
+```python
+import time, torch
+from time2vec import Time2Vec
+
+layer = Time2Vec(64).to("mps")
+x = torch.randn(256, 512, 1, device="mps")
+for _ in range(30):
+    layer(x)  # warmup
+torch.mps.synchronize()
+t0 = time.perf_counter()
+for _ in range(100):
+    layer(x)
+torch.mps.synchronize()
+print(f"{(time.perf_counter() - t0) / 100 * 1e3:.3f} ms/forward")
+```
+
+## 🧭 How this compares
+
+Time2Vec has no dedicated PyTorch package — implementations are typically either copied from GitHub (e.g. [ojus1/Time2Vec-PyTorch](https://github.com/ojus1/Time2Vec-PyTorch), which you copy into your project) or bundled inside a larger library ([Towhee](https://github.com/towhee-io/towhee)). This one is a focused, paper-faithful layer built to be depended on:
+
+* **Faithful to the paper.** Each scalar time value is embedded into `out_features` components — one linear term plus learnable-frequency sinusoids — verified by a test against the closed-form formula. (Ad-hoc variants sometimes collapse the whole sequence into a single value, expose only one frequency, or tie the output size to the sequence length — none of which is the Time2Vec representation.)
+* **General.** Any input shape `[..., 1]`, configurable embedding dimension, on CPU/GPU/MPS and in fp32/bf16/fp16 — no hardcoded device strings or fixed lengths.
+* **Fast on GPU.** A single fused projection with `sin` over the *contiguous* output; see [Performance](#-performance) for measured numbers vs. a common implementation.
+* **Production-ready.** Typed (`py.typed`, strict mypy), TorchScript- and `torch.compile`-compatible, 15 tests, CI on Python 3.10–3.13, and installable as a standalone package.
+
+## 🔧 Development
+
+This project uses [uv](https://docs.astral.sh/uv/).
+
+```bash
+git clone https://github.com/fbia/fast-time2vec-torch.git
+cd fast-time2vec-torch
+uv sync          # create the environment and install dev dependencies
+uv run pytest    # run the test suite
+uv run mypy      # static type check (strict)
+uv build         # build wheel + sdist
+```
+
+## ⚖️ License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 👤 Author
+
+Francesco Brundu — [LinkedIn](https://www.linkedin.com/in/fbrundu)

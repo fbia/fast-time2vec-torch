@@ -10,12 +10,22 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
+keywords = ["time2vec", "pytorch", "torch", "time-series", "embedding", "positional-encoding", "temporal"]
 authors = [
     { name = "Francesco Brundu", email = "author@gmail.com" }
 ]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 dependencies = [
     "torch>=2.0.0",
@@ -23,6 +33,9 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/fbia/fast-time2vec-torch"
+Repository = "https://github.com/fbia/fast-time2vec-torch"
+Issues = "https://github.com/fbia/fast-time2vec-torch/issues"
+Changelog = "https://github.com/fbia/fast-time2vec-torch/blob/main/CHANGELOG.md"
 Author = "https://www.linkedin.com/in/fbrundu"
 
 [dependency-groups]

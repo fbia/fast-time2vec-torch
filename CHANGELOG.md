@@ -13,7 +13,7 @@ Initial release — a vectorized PyTorch implementation of the Time2Vec temporal
 embedding layer (Kazemi et al., 2019, https://arxiv.org/abs/1907.05321).
 
 ### Added
-- `EfficientTime2Vec` layer: a single `nn.Linear(1, k)` projection followed by
+- `Time2Vec` layer: a single `nn.Linear(1, k)` projection followed by
   `sin` on the periodic channels, device- and shape-agnostic over leading
   dimensions, with `sin` applied to the contiguous projection for GPU efficiency.
 - Learned frequencies/phases: periodic frequencies initialize small (`N(0, 0.1)`)

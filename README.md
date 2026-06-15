@@ -19,9 +19,9 @@ While on `0.x` the API may change between minor versions — pin to a tag or com
 
 ```python
 import torch
-from time2vec import EfficientTime2Vec
+from time2vec import Time2Vec
 
-t2v = EfficientTime2Vec(out_features=16)
+t2v = Time2Vec(out_features=16)
 
 timestamps = torch.rand(32, 100, 1)  # [Batch, Seq, 1]
 embeddings = t2v(timestamps)         # -> [32, 100, 16]
@@ -42,7 +42,7 @@ embeddings = t2v(timestamps)         # -> [32, 100, 16]
 
 * **Mathematical alignment**: one linear term plus sinusoidal terms, matching the paper's scalar-frequency mapping.
 * **Single fused projection**: linear and periodic components share one `nn.Linear`, so the whole layer is a single matrix multiplication — no `repeat_interleave` or redundant tensor copies.
-* **Device & dtype agnostic**: runs on CPU, GPU, and MPS without hardcoded device strings — moves with `.to(device)`, or construct directly via `EfficientTime2Vec(k, device=..., dtype=...)`.
+* **Device & dtype agnostic**: runs on CPU, GPU, and MPS without hardcoded device strings — moves with `.to(device)`, or construct directly via `Time2Vec(k, device=..., dtype=...)`.
 * **Deployment ready**: standard `reset_parameters()`/`extra_repr()`, runs under `autocast`/bf16/fp16, and is both `torch.compile`- and `torch.jit.script`-compatible.
 * **Sensible init**: periodic frequencies init small (`N(0, 0.1)`) with random phases (`U(0, 2π)`); the linear term is pinned to identity (`ω₀=1, φ₀=0`) — the common Time2Vec recipe for learned frequencies, avoiding premature high-frequency oscillation.
 
@@ -63,9 +63,9 @@ hardware-dependent — reproduce with:
 
 ```python
 import time, torch
-from time2vec import EfficientTime2Vec
+from time2vec import Time2Vec
 
-layer = EfficientTime2Vec(64).to("mps")
+layer = Time2Vec(64).to("mps")
 x = torch.randn(256, 512, 1, device="mps")
 for _ in range(30):
     layer(x)  # warmup
@@ -76,6 +76,15 @@ for _ in range(100):
 torch.mps.synchronize()
 print(f"{(time.perf_counter() - t0) / 100 * 1e3:.3f} ms/forward")
 ```
+
+## 🧭 How this compares
+
+Time2Vec has no dedicated PyTorch package — implementations are typically either copied from GitHub (e.g. [ojus1/Time2Vec-PyTorch](https://github.com/ojus1/Time2Vec-PyTorch), which you copy into your project) or bundled inside a larger library ([Towhee](https://github.com/towhee-io/towhee)). This one is a focused, paper-faithful layer built to be depended on:
+
+* **Faithful to the paper.** Each scalar time value is embedded into `out_features` components — one linear term plus learnable-frequency sinusoids — verified by a test against the closed-form formula. (Ad-hoc variants sometimes collapse the whole sequence into a single value, expose only one frequency, or tie the output size to the sequence length — none of which is the Time2Vec representation.)
+* **General.** Any input shape `[..., 1]`, configurable embedding dimension, on CPU/GPU/MPS and in fp32/bf16/fp16 — no hardcoded device strings or fixed lengths.
+* **Fast on GPU.** A single fused projection with `sin` over the *contiguous* output; see [Performance](#-performance) for measured numbers vs. a common implementation.
+* **Production-ready.** Typed (`py.typed`, strict mypy), TorchScript- and `torch.compile`-compatible, 15 tests, CI on Python 3.10–3.13, and installable as a standalone package.
 
 ## 🔧 Development
 

@@ -1,9 +1,9 @@
 import torch
 
-from time2vec import EfficientTime2Vec
+from time2vec import Time2Vec
 
 # Quick sanity check
-layer = EfficientTime2Vec(out_features=16)
+layer = Time2Vec(out_features=16)
 
 # Simulate: [Batch Size = 32, Sequence Length = 100, Time Feature = 1]
 dummy_input = torch.randn(32, 100, 1)

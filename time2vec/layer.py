@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class EfficientTime2Vec(nn.Module):
+class Time2Vec(nn.Module):
     """Vectorized Time2Vec temporal embedding layer.
 
     Implements the representation of Kazemi et al. (2019), "Time2Vec: Learning a
@@ -50,7 +50,7 @@ class EfficientTime2Vec(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.shape[-1] != 1:
             raise ValueError(
-                "EfficientTime2Vec expects the last input dimension to be 1 "
+                "Time2Vec expects the last input dimension to be 1 "
                 "(a scalar time feature), got " + str(int(x.shape[-1]))
             )
         projection = self.project(x)
